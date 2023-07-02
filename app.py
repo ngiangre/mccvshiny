@@ -1,30 +1,45 @@
-from shiny import App, render, ui
+from shiny import App, reactive, render, ui
+import shinyswatch
+import mccv
 
 app_ui = ui.page_fluid(
-    ui.row(ui.h1('Monte Carlo Cross Validation')),
+    shinyswatch.theme.flatly(),
+    ui.panel_title('Monte Carlo Cross Validation'),
     ui.layout_sidebar(
         ui.panel_sidebar(
             ui.output_ui('upload_data'),
-            ui.input_action_button('run_model','Run MCCV'),
-            ui.output_ui('parameterize_model')
+            ui.input_action_button('run_model','Run MCCV',class_="btn-primary"),
+            ui.tags.div(
+                ui.tags.br(),
+                ui.input_slider("n", "Number of Bootstraps", 0, 200, 200),
+                ui.input_checkbox_group(
+                    'model_choices',
+                    "Model",
+                    ["Logistic Regression",
+                    "Random Forest"]
+                )
+            )
         ),
-        ui.panel_main(
-            ui.output_ui('show_model')
+        ui.navset_tab_card(
+            ui.nav('Tables',ui.output_ui('show_model')),
+            ui.nav('Plots',ui.output_ui('plots'))
         )
     )
 )
 
 
 def server(input, output, session):
+    @reactive.Calc
+    def mccv_dictionary():
+        mccv_dict = {}
+        mccv_dict['N'] = input.n()
+        mccv_dict['Models'] = input.model_choices()
+        return mccv_dict
     @output
     @render.ui
-    def parameterize_model():
-        ui.input_slider("n", "N", 0, 100, 20)
-        
-    @output
-    @render.ui
+    @reactive.event(input.run_model)
     def show_model():
-        return 'model run'
+        return str(mccv_dictionary())
 
 
 app = App(app_ui, server)
