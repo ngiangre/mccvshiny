@@ -32,9 +32,9 @@ Input: R range slider for target class 1 samples
 
 Input: P [0,1] proportion of class 1 samples in target distribution (remainder as class 0 samples)
 
-Output: Dataframe of status | result
+Output (return): Dataframe of status | result
 
-Output: Scatter boxplot of univariate distribution colored by class membership
+Output (side effect): Scatter boxplot of univariate distribution colored by class membership
 
 2. Parameterize MCCV Algorithm
 
@@ -42,7 +42,7 @@ Input: Number of Bootstraps [1,200]
 
 Input: Models ['Logistic Regression', 'Random Forest', 'Support Vector Machines', 'Gradient Boosting Classifier']
 
-Output: Dictionary of mccv parameters
+Output (return): Dictionary of mccv parameters
 
 3. Run MCCV Algorithm
 
