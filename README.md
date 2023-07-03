@@ -16,7 +16,7 @@ Interactive App for exploring Monte Carlo Cross Validation predictions from the 
 
 3. Opportunity for Nick to learn Shiny for Python
 
-## Components
+## Components or Modules
 
 1. Generate Data
 
@@ -54,14 +54,21 @@ Input: Dataframe of status | result
 
 Output: Two mccv objects
 
-3. Display MCCV Result Tables
+4. Display MCCV Result Tables
 
 Show the four tables as four tabs
 
-4. Display MCCV Result Plots
+Input: Two mccv objects
+
+Output: Navset_bars of 4 tables for 1) real and 2) permuted mccv
+
+5. Display MCCV Result Plots
 
 Show 4 standard plots based on the 4 tables
 
+Input: Two mccv objects
+
+Output: Navset_bar of 4 plotsm
 
 ## Design
 
