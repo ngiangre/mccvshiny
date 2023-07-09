@@ -35,7 +35,7 @@ def generate_data_ui(label: str = "simulate"):
                     ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False,width='200px'),
                     ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False,width='200px'),
                     ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False,width='200px'),
-                    ui.input_slider('std_diff',label='Effect Size of Class 1',min=0,max=1,value=0,step=0.1,ticks=False,width='200px')
+                    ui.input_slider('std_diff',label='Class 1 Mean Difference',min=0,max=1,value=0,step=0.1,ticks=False,width='200px')
                 ),
                 main = ui.navset_tab_card(
                     ui.nav('Plot',
@@ -46,9 +46,11 @@ def generate_data_ui(label: str = "simulate"):
             )
 
 @module.server
-def generate_data_server(input, output, session):
+def generate_data_server(input, output, session,mccv_obj):
     
-    rng = np.random.default_rng(0)
+    seed = 0
+    rng = np.random.default_rng(seed)
+    mccv_obj.seed = seed
     
     @reactive.Calc
     @reactive.event(input.dist)
@@ -87,4 +89,6 @@ def generate_data_server(input, output, session):
     @output
     @render.plot
     def dist_plot():
+        mccv_obj.set_X(data_generator().loc[:,['result']])
+        mccv_obj.set_Y(data_generator().loc[:,['class']])
         return sns.histplot(data_generator(),x='result',hue='class')

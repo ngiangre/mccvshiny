@@ -24,7 +24,15 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
-    generate_data_server('simulate')
-    mccv_parameters_server('mccv_parameters')
+    mccv_obj = mccv.mccv()
+    generate_data_server('simulate',mccv_obj)
+    mccv_parameters_server('mccv_parameters',mccv_obj)
+    
+    @output
+    @render.ui
+    def tables():
+        return ui.div(
+            render.data_frame(mccv)
+        )
 
 app = App(app_ui, server)
