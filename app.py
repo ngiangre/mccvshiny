@@ -4,6 +4,8 @@ import mccv
 from generate_data import generate_data_ui, generate_data_server
 from mccv_parameters import mccv_parameters_ui, mccv_parameters_server
 
+import pandas as pd
+
 app_ui = ui.page_fluid(
     shinyswatch.theme.flatly(),
     ui.panel_title('Monte Carlo Cross Validation'),
@@ -15,11 +17,14 @@ app_ui = ui.page_fluid(
         '''),
     generate_data_ui('simulate'),
     ui.layout_sidebar(
-        sidebar = mccv_parameters_ui('mccv_parameters'),
+        sidebar = ui.panel_sidebar(
+            ui.input_action_button('run_model','Run MCCV',class_="btn-primary"),
+            mccv_parameters_ui('mccv_parameters')
+        ),
         main = ui.navset_tab_card(
-            ui.nav('Tables',ui.output_ui('tables')),
-            ui.nav('Plots',ui.output_ui('plots'))
-        )
+                ui.nav('Tables',ui.output_data_frame('tables')),
+                ui.nav('Plots',ui.output_ui('plots'))
+            )
     )
 )
 
@@ -28,11 +33,18 @@ def server(input, output, session):
     generate_data_server('simulate',mccv_obj)
     mccv_parameters_server('mccv_parameters',mccv_obj)
     
+    @reactive.Calc
+    @reactive.event(input.run_model)
+    def mccv_data():
+        mccv_obj.run_mccv()
+        return mccv_obj.mccv_data
+            
     @output
-    @render.ui
+    @render.data_frame
+    @reactive.event(mccv_data)
     def tables():
-        return ui.div(
-            render.data_frame(mccv)
+        return render.DataGrid(
+            mccv_data()['Performance'].groupby(['model','metric'])['value'].mean().reset_index()
         )
 
 app = App(app_ui, server)
