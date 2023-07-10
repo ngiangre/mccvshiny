@@ -39,7 +39,10 @@ def generate_data_ui(label: str = "simulate"):
                 ),
                 main = ui.navset_tab_card(
                     ui.nav('Plot',
-                           ui.output_plot('dist_plot')),
+                           ui.row(
+                               ui.output_plot('dist_histplot'),
+                               ui.output_plot('dist_boxplot')
+                               )),
                     ui.nav('Table',
                            ui.output_data_frame('dist_table'))
                     )
@@ -60,14 +63,14 @@ def generate_data_server(input, output, session,mccv_obj):
     @reactive.Effect
     def _():
         if input.dist()=='normal':
-            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=.1)
+            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
             ui.update_slider('param2',label='sigma',min=1,max=5,value=1,step=1)
         if input.dist()=='t':
-            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=.1)
+            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
             ui.update_slider('param2',label='df',min=1,max=5,value=1,step=1)
         if input.dist()=='beta':
-            ui.update_slider('param1',label='a',min=1,max=5,value=1,step=.1)
-            ui.update_slider('param2',label='b',min=1,max=5,value=1,step=.1)
+            ui.update_slider('param1',label='a',min=1,max=5,value=1,step=1)
+            ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
     
     @reactive.Calc
     def data_generator():
@@ -86,9 +89,24 @@ def generate_data_server(input, output, session,mccv_obj):
             width="100%",
             height="100%")
     
-    @output
-    @render.plot
-    def dist_plot():
+    @reactive.Effect
+    @reactive.event(data_generator)
+    def _():
         mccv_obj.set_X(data_generator().loc[:,['result']])
         mccv_obj.set_Y(data_generator().loc[:,['class']])
+        
+    @output
+    @render.plot
+    def dist_histplot():
         return sns.histplot(data_generator(),x='result',hue='class')
+    
+    @output
+    @render.plot
+    def dist_boxplot():
+        tmp = data_generator().copy()
+        tmp['class'] = tmp['class'].astype('object')
+        tmp['f'] = ' '
+        ax = sns.stripplot(tmp,x='result',y='f',hue='class',dodge=True)
+        ax.set_ylabel('')
+        return ax
+    
