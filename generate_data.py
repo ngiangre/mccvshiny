@@ -3,7 +3,7 @@ from htmltools import css
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
+from plotnine import *
 
 def generate_arrays(class1_size, effect_size, input_array):
     '''
@@ -61,6 +61,7 @@ def generate_data_server(input, output, session,mccv_obj):
         return getattr(rng,input.dist())
     
     @reactive.Effect
+    @reactive.event(input.dist)
     def _():
         if input.dist()=='normal':
             ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
@@ -73,6 +74,7 @@ def generate_data_server(input, output, session,mccv_obj):
             ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
     
     @reactive.Calc
+    @reactive.event(input.param1,input.param2,input.n,input.prop_class1,input.std_diff)
     def data_generator():
         arr = dist_func()(input.param1(),
                             input.param2(),
@@ -98,15 +100,28 @@ def generate_data_server(input, output, session,mccv_obj):
     @output
     @render.plot
     def dist_histplot():
-        return sns.histplot(data_generator(),x='result',hue='class')
+        tmp = data_generator().copy()
+        tmp['class'] = tmp['class'].astype('object')
+        if input.dist() == 'normal':
+            binwidth_ = 0.5
+        if input.dist() == 'beta':
+            binwidth_ = 0.1
+        return (ggplot(tmp,aes(x='result',fill='class'))
+                + geom_histogram(binwidth=binwidth_,position='identity',alpha=0.5,color='black')
+                + labs(x='Result',y='Number in Class')
+                + theme_bw()
+                + theme(text=element_text(face='bold')))
     
     @output
     @render.plot
     def dist_boxplot():
         tmp = data_generator().copy()
         tmp['class'] = tmp['class'].astype('object')
-        tmp['f'] = ' '
-        ax = sns.stripplot(tmp,x='result',y='f',hue='class',dodge=True)
-        ax.set_ylabel('')
-        return ax
+        return (ggplot(tmp,aes(x='class',y='result',color='class'))
+                + geom_violin()
+                + geom_boxplot(color='black')
+                + geom_jitter() 
+                + labs(y='Result',x='Class')
+                + theme_bw()
+                + theme(text=element_text(face='bold')))
     
