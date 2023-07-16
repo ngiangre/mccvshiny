@@ -26,23 +26,29 @@ def generate_arrays(class1_size, effect_size, input_array):
 @module.ui
 def generate_data_ui(label: str = "simulate"):
     return  ui.layout_sidebar(
-                sidebar = ui.div(
+                sidebar = ui.panel_sidebar(
                     ui.input_slider('n','N',
                                     min=50,max=500,step=50,value=100,
-                                    ticks=False,width='200px'),
+                                    ticks=False),
                     ui.input_selectize('dist','Distribution Type',
-                                    choices = {'normal' : 'Normal','beta' : 'Beta'},multiple=False,width = '200px'),
-                    ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False,width='200px'),
-                    ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False,width='200px'),
-                    ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False,width='200px'),
-                    ui.input_slider('std_diff',label='Class 1 Mean Difference',min=0,max=1,value=0,step=0.1,ticks=False,width='200px')
+                                    choices = {'normal' : 'Normal','beta' : 'Beta'},multiple=False),
+                    ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
+                    ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False),
+                    ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
+                    ui.input_slider('std_diff',label="Cohen's d",min=0,max=2,value=0,step=0.1,ticks=False),
+                    width = 2
                 ),
                 main = ui.navset_tab_card(
                     ui.nav('Plot',
                            ui.row(
-                               ui.output_plot('dist_histplot'),
-                               ui.output_plot('dist_boxplot')
-                               )),
+                               ui.column(6,
+                                   ui.output_plot('dist_histplot')
+                                   ),
+                               ui.column(6,
+                                   ui.output_plot('dist_boxplot')
+                                   )
+                               )
+                           ),
                     ui.nav('Table',
                            ui.output_data_frame('dist_table'))
                     )
@@ -101,7 +107,7 @@ def generate_data_server(input, output, session,mccv_obj):
     @render.plot
     def dist_histplot():
         tmp = data_generator().copy()
-        tmp['class'] = tmp['class'].astype('object')
+        tmp['class'] = tmp['class'].astype('int64').astype('object')
         if input.dist() == 'normal':
             binwidth_ = 0.5
         if input.dist() == 'beta':
@@ -109,6 +115,7 @@ def generate_data_server(input, output, session,mccv_obj):
         return (ggplot(tmp,aes(x='result',fill='class'))
                 + geom_histogram(binwidth=binwidth_,position='identity',alpha=0.5,color='black')
                 + labs(x='Result',y='Number in Class')
+                + scale_fill_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
                 + theme(text=element_text(face='bold')))
     
@@ -116,12 +123,13 @@ def generate_data_server(input, output, session,mccv_obj):
     @render.plot
     def dist_boxplot():
         tmp = data_generator().copy()
-        tmp['class'] = tmp['class'].astype('object')
+        tmp['class'] = tmp['class'].astype('int64').astype('object')
         return (ggplot(tmp,aes(x='class',y='result',color='class'))
                 + geom_violin()
-                + geom_boxplot(color='black')
-                + geom_jitter() 
+                + geom_boxplot(color='black',size=2)
+                + geom_jitter(size=3) 
                 + labs(y='Result',x='Class')
+                + scale_color_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
                 + theme(text=element_text(face='bold')))
     

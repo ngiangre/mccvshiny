@@ -19,7 +19,8 @@ app_ui = ui.page_fluid(
     ui.layout_sidebar(
         sidebar = ui.panel_sidebar(
             ui.input_action_button('run_model','Run MCCV',class_="btn-primary"),
-            mccv_parameters_ui('mccv_parameters')
+            mccv_parameters_ui('mccv_parameters'),
+            width = 2
         ),
         main = ui.navset_tab_card(
                 ui.nav('Tables',ui.output_data_frame('tables')),
