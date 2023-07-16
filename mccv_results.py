@@ -18,6 +18,8 @@ def mccv_results_ui(label: str = 'mccv_parameters'):
     )
 @module.server
 def mccv_results_server(input,output,session,mccv_obj):
+    mccv_parameters_server('mccv_parameters',mccv_obj)
+    
     @reactive.Calc
     @reactive.event(input.run_model)
     def mccv_data():
