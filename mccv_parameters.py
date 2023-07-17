@@ -6,24 +6,24 @@ def mccv_parameters_ui(label: str = 'mccv_parameters'):
     return ui.tags.div(
                 ui.tags.br(),
                 ui.input_slider("n", "Number of Bootstraps", 0, 200, 200,step = 10,ticks=False),
+                ui.input_slider("n_jobs", "Number of Jobs", 1, 4, 4,step = 1,ticks=False),
                 ui.input_checkbox_group(
                     'model_choices',
                     "Model(s)",
                     ["Logistic Regression",
-                    "Random Forest"],
+                    "Random Forest",
+                    "Support Vector Machine",
+                    "Gradient Boosting Classifier"],
                     selected = ["Logistic Regression"]
                 ),
-                ui.input_slider("test_size", "Validation Set Proportion", 0.15, 0.85, 0.15, step=0.05, ticks=False)
+                ui.input_slider("test_size", "Validation Set Proportion", 0.15, 0.85, 0.15, step=0.05, ticks=False),
+                ui.output_text_verbatim('tmp')
             )
 @module.server
 def mccv_parameters_server(input,output,session,mccv_obj):
-    @reactive.Calc
-    def mccv_dictionary():
-        mccv_dict = {}
-        mccv_dict['N'] = input.n()
-        mccv_obj.num_bootstraps = mccv_dict['N']
-        mccv_dict['Models'] = list(input.model_choices())
-        mccv_obj.model_names = mccv_dict['Models']
-        mccv_dict['Test Size'] = input.test_size()
-        mccv_obj.test_size = mccv_dict['Test Size']
-        return mccv_dict
+    @reactive.Effect
+    def _():
+        mccv_obj.num_bootstraps = input.n()
+        mccv_obj.n_jobs = input.n_jobs()
+        mccv_obj.model_names = input.model_choices()
+        mccv_obj.test_size = input.test_size()
