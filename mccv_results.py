@@ -63,16 +63,20 @@ def mccv_results_server(input,output,session,mccv_obj):
     @render.plot
     @reactive.event(f_imp_df)
     def feature_importance():
+        pos = position_dodge(width = 0.7)
         return (ggplot(f_imp_df(),aes(x='model',y='importance',
                                       color='feature'))
-                + geom_boxplot(alpha=0) 
-                + geom_point(size=3,
-                             position=position_jitter(width=0.2))
+                + geom_boxplot(alpha=0,
+                             position=pos) 
+                + geom_jitter(size=3,
+                              position = position_jitterdodge(dodge_width = 0.7,jitter_width = 0.1))
                 + scale_color_brewer(type='qual',palette=2)
+                + facet_wrap('model')
                 + theme_bw()
                 + theme(text=element_text(face='bold'))
                 + labs(**{'x': '','y': 'Feature Importance'})
                 )
+
     @output
     @render.data_frame
     @reactive.event(mccv_data)
