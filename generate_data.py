@@ -92,10 +92,7 @@ def generate_data_server(input, output, session,mccv_obj):
     @output
     @render.data_frame
     def dist_table():
-        return render.DataGrid(
-            data_generator(),
-            width="100%",
-            height="100%")
+        return data_generator()
     
     @reactive.Effect
     @reactive.event(data_generator)
