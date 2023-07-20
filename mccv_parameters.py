@@ -9,11 +9,8 @@ def mccv_parameters_ui(label: str = 'mccv_parameters'):
                 ui.input_slider("n_jobs", "Number of Jobs", 1, 4, 4,step = 1,ticks=False),
                 ui.input_checkbox_group(
                     'model_choices',
-                    "Model(s)",
-                    ["Logistic Regression",
-                    "Random Forest",
-                    "Support Vector Machine",
-                    "Gradient Boosting Classifier"],
+                    "Model:",
+                    ["Logistic Regression"],
                     selected = ["Logistic Regression"]
                 ),
                 ui.input_slider("test_size", "Validation Set Proportion", 0.15, 0.85, 0.15, step=0.05, ticks=False),
