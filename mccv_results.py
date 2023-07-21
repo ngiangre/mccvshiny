@@ -4,7 +4,11 @@ from htmltools import css
 from mccv_parameters import mccv_parameters_ui, mccv_parameters_server
 
 import numpy as np
+import pandas as pd
 from plotnine import *
+
+import asyncio
+import pickle
 
 @module.ui
 def mccv_results_ui(label: str = 'mccv_parameters'):
@@ -32,31 +36,57 @@ def mccv_results_server(input,output,session,mccv_obj):
     @reactive.Calc
     @reactive.event(input.run_model)
     def mccv_data():
-        mccv_obj.run_mccv()
+        with ui.Progress(min=1, max=15) as p:
+            p.set(message="Learning in progress", detail="This may take a while...")
+            mccv_obj.run_mccv()
+            with open('mccv_dict.pickle', 'wb') as handle:
+                pickle.dump(mccv_obj.mccv_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            p.set(message="Permutation Learning in progress", detail="This may take a while...")
+            mccv_obj.run_permuted_mccv()
+            with open('mccv_permuted_dict.pickle', 'wb') as handle:
+                pickle.dump(mccv_obj.mccv_permuted_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return mccv_obj.mccv_data
     
     @reactive.Calc
     @reactive.event(mccv_data)
     def ml_df():
-        return (mccv_obj.mccv_data['Model Learning'].
-                melt(id_vars = ['bootstrap','model'])
+        return pd.concat([
+            (mccv_obj.mccv_data['Model Learning'].
+                melt(id_vars = ['bootstrap','model']).
+                eval('learning = "real"')
+                ),
+            (mccv_obj.mccv_permuted_data['Model Learning'].
+                melt(id_vars = ['bootstrap','model']).
+                eval('learning = "permuted"')
                 )
+            ])
     
     @output
     @render.plot
     @reactive.event(ml_df)
     def model_performance():
-        return (ggplot(ml_df(),aes(x='model',y='value',color='variable'))
-                + geom_boxplot(alpha=0)
-                + geom_point(aes(group='variable'),size=3,position=position_jitterdodge(dodge_width = 0.7,jitter_width = 0.1))
+        tmp = ml_df().copy()
+        return (ggplot(
+                    data=tmp,
+                    mapping=aes(x='model',y='value',group='variable'))
+                + geom_boxplot(
+                        data=tmp.query("learning=='real'"),
+                        color='black',
+                        size=2,
+                        alpha=0
+                        )
+                + geom_point(
+                    data=tmp.query("learning=='real'"),
+                    mapping=aes(color='variable'),
+                    position=position_jitterdodge(jitter_width=0.2),
+                    size=3,alpha=0.7)
                 + scale_color_brewer(type='qual',palette=1) 
                 + guides(color=guide_legend(title='',ncol=1))
                 + scale_y_continuous(limits=[0,1]) 
                 + theme_bw() 
                 + theme(text=element_text(face='bold'),
                         legend_position='bottom')
-                + labs(**{'x': '','y': 'AUROC'},
-                       title='Model Learning')
+                + labs(**{'x': '','y': 'AUROC'},title='Model Learning')
                 )
     
     @reactive.Calc
