@@ -92,19 +92,33 @@ def mccv_results_server(input,output,session,mccv_obj):
     @reactive.Calc
     @reactive.event(mccv_data)
     def f_imp_df():
-        return (mccv_obj.mccv_data['Feature Importance'])
+        return (mccv_obj.mccv_data['Feature Importance'].
+                set_index(['bootstrap','model','feature']).
+                join(
+                    mccv_obj.mccv_permuted_data['Feature Importance'].
+                    rename(columns={'importance' : 'permuted_importance'}).
+                    set_index(['bootstrap','model','feature'])
+                ).
+                reset_index()
+                )
     
     @output
     @render.plot
     @reactive.event(f_imp_df)
     def feature_importance():
         pos = position_dodge(width = 0.7)
-        return (ggplot(f_imp_df(),aes(x='model',y='importance',
-                                      color='feature'))
-                + geom_boxplot(alpha=0,
-                             position=pos) 
+        tmp = f_imp_df().copy()
+        return (ggplot(tmp,
+                       aes(x='model',y='importance',color='feature'))
+                + geom_violin(
+                    mapping=aes(x='model',y='permuted_importance',
+                                group='feature'),
+                    position=position_dodge(width = .7),
+                    color='lightgrey',
+                    size=3)
+                + geom_boxplot(size=2) 
                 + geom_jitter(size=3,
-                              position = position_jitterdodge(dodge_width = 0.7,jitter_width = 0.1))
+                              position = position_jitterdodge(jitter_width = 0.2))
                 + scale_color_brewer(type='qual',palette=2)
                 + theme_bw()
                 + theme(text=element_text(face='bold'),
