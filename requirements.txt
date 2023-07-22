@@ -1,0 +1,8 @@
+shiny
+shhinyswatch
+mccv
+htmltools
+numpy
+pandas
+plotnine
+asyncio

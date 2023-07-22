@@ -8,7 +8,6 @@ import pandas as pd
 from plotnine import *
 
 import asyncio
-import pickle
 
 @module.ui
 def mccv_results_ui(label: str = 'mccv_parameters'):
@@ -39,12 +38,8 @@ def mccv_results_server(input,output,session,mccv_obj):
         with ui.Progress(min=1, max=15) as p:
             p.set(message="Learning in progress", detail="This may take a while...")
             mccv_obj.run_mccv()
-            with open('mccv_dict.pickle', 'wb') as handle:
-                pickle.dump(mccv_obj.mccv_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
             p.set(message="Permutation Learning in progress", detail="This may take a while...")
             mccv_obj.run_permuted_mccv()
-            with open('mccv_permuted_dict.pickle', 'wb') as handle:
-                pickle.dump(mccv_obj.mccv_permuted_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return mccv_obj.mccv_data
     
     @reactive.Calc
