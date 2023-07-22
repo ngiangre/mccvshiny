@@ -1,0 +1,12 @@
+{
+    "https://api.shinyapps.io": {
+        "server_url": "https://api.shinyapps.io",
+        "filename": "/Users/nickgiangreco/GitHub/mccvshiny",
+        "app_url": "https://nick-giangreco.shinyapps.io/mccvshiny1/",
+        "app_id": 9491309,
+        "app_guid": null,
+        "title": "mccvshiny",
+        "app_mode": "python-shiny",
+        "app_store_version": 1
+    }
+}
