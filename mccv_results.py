@@ -134,28 +134,40 @@ def mccv_results_server(input,output,session,mccv_obj):
     @reactive.Calc
     @reactive.event(mccv_data)
     def preds_df():
-        return (mccv_obj.mccv_data['Performance'])
+        return (pd.concat([
+            mccv_obj.mccv_data['Performance'].eval('learning="real"'),mccv_obj.mccv_permuted_data['Performance'].eval('learning="permuted"')
+            ]))
     
     @output
     @render.plot
     @reactive.event(preds_df)
     def model_prediction():
-        return (ggplot(preds_df(),aes(x='model',y='value'))
+        tmp = preds_df().copy()
+        return (ggplot(tmp.query('learning=="real"'),aes(x='model',
+                                                         y='value'))
+                + geom_violin(data=tmp.query('learning=="permuted"'),color="lightgrey",size=2)
                 + geom_boxplot(alpha=0) 
                 + geom_point(shape='o',size=3,position=position_jitter(width=0.2))
                 + theme_bw()
                 + theme(text=element_text(face='bold'),
                         legend_position='bottom')
                 + labs(**{'x' : '','y' : 'AUROC'},
-                    title="Model prediction",)
+                    title="Model Prediction",)
                 )
     
     @reactive.Calc
     @reactive.event(mccv_data)
     def pt_preds_df():
-        return (mccv_obj.mccv_data['Patient Predictions'].
-                groupby(['bootstrap','model','y_true'])['y_proba'].mean().
-                reset_index())
+        return (pd.concat([
+                    mccv_obj.mccv_data['Patient Predictions'].
+                                groupby(['bootstrap','model','y_true'])['y_proba'].mean().
+                                reset_index().
+                                eval('learning="real"'),
+                    mccv_obj.mccv_permuted_data['Patient Predictions'].
+                                groupby(['bootstrap','model','y_true'])['y_proba'].mean().
+                                reset_index().
+                                eval('learning="permuted"')
+                ]))
     
     @output
     @render.plot
@@ -163,8 +175,9 @@ def mccv_results_server(input,output,session,mccv_obj):
     def patient_prediction():
         tmp = pt_preds_df().copy()
         tmp['y_true'] = tmp['y_true'].astype('int').astype('object')
-        return (ggplot(tmp,
-                       aes(x='y_true',y='y_proba',color='y_true'))
+        return (ggplot(tmp.query('learning=="real"'),
+                        mapping=aes(x='y_true',y='y_proba',color='y_true'))
+                + geom_violin(data=tmp.query('learning=="permuted"'),color="lightgrey",size=2)
                 + geom_boxplot(alpha=0)
                 + geom_point(shape='o',size=3,position=position_jitter(width=0.2))
                 + scale_color_brewer(type='qual',palette=3)
@@ -173,7 +186,7 @@ def mccv_results_server(input,output,session,mccv_obj):
                 + theme(text=element_text(face='bold'),
                         legend_position='bottom')
                 + labs(**{'x' : '','y' : 'Patient Probability'},
-                    title="Subject predictions")
+                    title="Subject Prediction")
                 )
 
     @output
