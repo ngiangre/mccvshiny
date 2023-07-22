@@ -1,6 +1,6 @@
 shiny
-shhinyswatch
-mccv
+shinyswatch
+mccv @ git+https://github.com/ngiangre/mccv.git
 htmltools
 numpy
 pandas
