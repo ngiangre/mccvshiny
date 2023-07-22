@@ -50,7 +50,7 @@ def generate_data_ui(label: str = "simulate"):
     return  ui.layout_sidebar(
                 sidebar = ui.panel_sidebar(
                     ui.input_slider('n','N',
-                                    min=50,max=500,step=50,value=100,
+                                    min=50,max=1000,step=50,value=500,
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
                                     choices = {
@@ -59,8 +59,8 @@ def generate_data_ui(label: str = "simulate"):
                                         'negative_binomial' : 'Negative Binomial',
                                         'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
-                    ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
-                    ui.input_slider('std_diff',label="Cohen's d",min=-2,max=2,value=0,step=0.1,ticks=False),
+                    ui.input_slider('prop_class1',label='Class 1 Proportion',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
+                    ui.input_slider('std_diff',label="Cohen's D",min=-2,max=2,value=0,step=0.1,ticks=False),
                     width = 2
                 ),
                 main = ui.navset_tab_card(
@@ -111,7 +111,7 @@ def generate_data_server(input, output, session,mccv_obj):
             )
         if input.dist()=='pareto':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=10,step=1,value=1,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=1,max=10,step=1,value=2,ticks=False)
             )
         if input.dist()=='standard_t':
             return ui.TagList(
@@ -129,7 +129,7 @@ def generate_data_server(input, output, session,mccv_obj):
         if input.dist()=='poisson':
             ui.update_slider('param1',label='df',min=0,max=input.n()-1,value=1,step=1)
         if input.dist()=='pareto':
-            ui.update_slider('param1',label='a',min=1,max=10,value=1,step=1)
+            ui.update_slider('param1',label='a',min=1,max=10,value=2,step=1)
         if input.dist()=='standard_t':
             ui.update_slider('param1',label='df',min=1,max=input.n()-1,value=input.n()-1,step=1)
         if input.dist()=='beta':
@@ -199,10 +199,10 @@ def generate_data_server(input, output, session,mccv_obj):
                                  color='darkgray',fill='darkgray')
                 + geom_histogram(mapping=aes(y=after_stat('count')),
                                  binwidth=binwidth_,position='identity',alpha=0.5,color='black')
-                + labs(x='Result',y='Number in Class')
+                + labs(x='Result',y='Number in Class',caption='Entire distribution in gray')
                 + scale_fill_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
-                + theme(text=element_text(face='bold')))
+                + theme(text=element_text(family='Times',size=16)))
     
     @output
     @render.plot
@@ -210,11 +210,11 @@ def generate_data_server(input, output, session,mccv_obj):
         tmp = data_generator().copy()
         tmp['class'] = tmp['class'].astype('int64').astype('object')
         return (ggplot(tmp,aes(x='class',y='result',color='class'))
-                + geom_violin()
+                + geom_violin(size=2)
                 + geom_boxplot(color='black',size=2)
-                + geom_jitter(size=3) 
+                + geom_jitter(size=3,width=0.2) 
                 + labs(y='Result',x='Class')
                 + scale_color_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
-                + theme(text=element_text(face='bold')))
+                + theme(text=element_text(family='Times',size=16)))
     

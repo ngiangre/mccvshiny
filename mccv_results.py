@@ -83,7 +83,7 @@ def mccv_results_server(input,output,session,mccv_obj):
                 + guides(color=guide_legend(title='',ncol=1))
                 + scale_y_continuous(limits=[0,1]) 
                 + theme_bw() 
-                + theme(text=element_text(face='bold'),
+                + theme(text=element_text(family='Times',size=16),
                         legend_position='bottom')
                 + labs(**{'x': '','y': 'AUROC'},title='Model Learning')
                 )
@@ -120,7 +120,7 @@ def mccv_results_server(input,output,session,mccv_obj):
                               position = position_jitterdodge(jitter_width = 0.2))
                 + scale_color_brewer(type='qual',palette=2)
                 + theme_bw()
-                + theme(text=element_text(face='bold'),
+                + theme(text=element_text(family='Times',size=16),
                         legend_position='bottom')
                 + labs(**{'x': '','y': 'Feature Importance'},
                        title='Feature Importance')
@@ -144,7 +144,7 @@ def mccv_results_server(input,output,session,mccv_obj):
                 + geom_boxplot(alpha=0) 
                 + geom_point(shape='o',size=3,position=position_jitter(width=0.2))
                 + theme_bw()
-                + theme(text=element_text(face='bold'),
+                + theme(text=element_text(family='Times',size=16),
                         legend_position='bottom')
                 + labs(**{'x' : '','y' : 'AUROC'},
                     title="Model Prediction",)
@@ -178,7 +178,7 @@ def mccv_results_server(input,output,session,mccv_obj):
                 + scale_color_brewer(type='qual',palette=3)
                 + scale_y_continuous(limits=[0,1])
                 + theme_bw()
-                + theme(text=element_text(face='bold'),
+                + theme(text=element_text(family='Times',size=16),
                         legend_position='bottom')
                 + labs(**{'x' : '','y' : 'Patient Probability'},
                     title="Subject Prediction")
