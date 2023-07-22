@@ -23,6 +23,23 @@ def generate_arrays(class1_size, effect_size, input_array):
     
     return class1_array, class0_array
 
+def calculate_bin_width(data_array):
+    # Sort the data in ascending order
+    sorted_data = np.sort(data_array)
+    
+    # Calculate the interquartile range (IQR)
+    q1 = np.percentile(sorted_data, 25)
+    q3 = np.percentile(sorted_data, 75)
+    iqr = q3 - q1
+    
+    # Calculate the number of data points
+    n = len(sorted_data)
+    
+    # Calculate the bin width using the Freedman-Diaconis rule
+    bin_width = 2.0 * iqr * n**(-1/3)
+    
+    return bin_width
+
 @module.ui
 def generate_data_ui(label: str = "simulate"):
     return  ui.layout_sidebar(
@@ -31,10 +48,14 @@ def generate_data_ui(label: str = "simulate"):
                                     min=50,max=500,step=50,value=100,
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
-                                    choices = {'normal' : 'Normal','beta' : 'Beta','standard_t' : "Student's T"},multiple=False),
+                                    choices = {
+                                        'normal' : 'Normal','poisson' : 'Poisson',
+                                        'beta' : 'Beta','standard_t' : "Student's T",
+                                        'negative_binomial' : 'Negative Binomial',
+                                        'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
-                    ui.input_slider('std_diff',label="Cohen's d",min=0,max=2,value=0,step=0.1,ticks=False),
+                    ui.input_slider('std_diff',label="Cohen's d",min=-2,max=2,value=0,step=0.1,ticks=False),
                     width = 2
                 ),
                 main = ui.navset_tab_card(
@@ -67,15 +88,29 @@ def generate_data_server(input, output, session,mccv_obj):
     
     @output
     @render.ui
+    @reactive.event(input.dist,input.n)
     def dist_params():
         if input.dist()=='normal' or input.dist()=='beta':
             return ui.TagList(
                 ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
                 ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False)
             )
+        if input.dist()=='negative_binomial':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=1,ticks=False),
+                ui.input_slider('param2','Parameter 2',min=0.1,max=0.7,step=0.1,value=0.5,ticks=False)
+            )
+        if input.dist()=='poisson':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=1,ticks=False)
+            )
+        if input.dist()=='pareto':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=1,max=10,step=1,value=1,ticks=False)
+            )
         if input.dist()=='standard_t':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=5,step=1,value=1,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=input.n()-1,ticks=False)
             )
     @reactive.Effect
     @reactive.event(input.dist,input.n)
@@ -83,18 +118,35 @@ def generate_data_server(input, output, session,mccv_obj):
         if input.dist()=='normal':
             ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
             ui.update_slider('param2',label='sigma',min=1,max=5,value=1,step=1)
+        if input.dist()=='negative_binomial':
+            ui.update_slider('param1',label='n',min=1,max=input.n()-1,value=1,step=1)
+            ui.update_slider('param2',label='p',min=0.1,max=0.7,value=0.5,step=0.1)
+        if input.dist()=='poisson':
+            ui.update_slider('param1',label='df',min=0,max=input.n()-1,value=1,step=1)
+        if input.dist()=='pareto':
+            ui.update_slider('param1',label='a',min=1,max=10,value=1,step=1)
         if input.dist()=='standard_t':
-            ui.update_slider('param1',label='df',min=1,max=input.n()-1,value=1,step=1)
+            ui.update_slider('param1',label='df',min=1,max=input.n()-1,value=input.n()-1,step=1)
         if input.dist()=='beta':
             ui.update_slider('param1',label='a',min=1,max=5,value=1,step=1)
             ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
     
     @reactive.Calc
-    @reactive.event(input.dist,input.param1 or input.param2,input.n)
+    @reactive.event(input.dist,input.param1,input.param2,input.n)
     def dist_param_dict():
         if input.dist()=='normal':
             return {'loc' : input.param1(),
                     'scale' : input.param2(),
+                    'size' : input.n()}
+        if input.dist()=='negative_binomial':
+            return {'n' : np.max([input.param1(),1]),
+                    'p' : input.param2(),
+                    'size' : input.n()}
+        if input.dist()=='poisson':
+            return {'lam' : np.max([input.param1(),1]),
+                    'size' : input.n()}
+        if input.dist()=='pareto':
+            return {'a' : np.max([input.param1(),1]),
                     'size' : input.n()}
         if input.dist()=='standard_t':
             return {'df' : np.max([input.param1(),1]),
@@ -126,17 +178,22 @@ def generate_data_server(input, output, session,mccv_obj):
         
     @output
     @render.plot
+    @reactive.event(data_generator)
     def dist_histplot():
         tmp = data_generator().copy()
         tmp['class'] = tmp['class'].astype('int64').astype('object')
-        if input.dist() == 'normal':
-            binwidth_ = 0.5
-        if input.dist() == 'beta':
-            binwidth_ = 0.1
-        if input.dist() == 'standard_t':
-            binwidth_ = 5
+        binwidth_ = np.max([1,
+                            calculate_bin_width(tmp.result.values)
+                            ])
         return (ggplot(tmp,aes(x='result',fill='class'))
-                + geom_histogram(binwidth=binwidth_,position='identity',alpha=0.5,color='black')
+                + geom_density(data=tmp,
+                               mapping=aes(x='result',
+                                           y=after_stat('count*binwidth_')),
+                                 alpha=0.5,inherit_aes=False,
+                                 size=2,
+                                 color='darkgray',fill='darkgray')
+                + geom_histogram(mapping=aes(y=after_stat('count')),
+                                 binwidth=binwidth_,position='identity',alpha=0.5,color='black')
                 + labs(x='Result',y='Number in Class')
                 + scale_fill_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
