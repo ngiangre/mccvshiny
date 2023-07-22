@@ -69,6 +69,10 @@ def mccv_results_server(input,output,session,mccv_obj):
         return (ggplot(
                     data=tmp,
                     mapping=aes(x='model',y='value',group='variable'))
+                + geom_violin(
+                        position=position_dodge(width=0.75),
+                        color='lightgrey',
+                        size=3)
                 + geom_boxplot(
                         data=tmp.query("learning=='real'"),
                         color='black',
