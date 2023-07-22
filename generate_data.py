@@ -32,8 +32,7 @@ def generate_data_ui(label: str = "simulate"):
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
                                     choices = {'normal' : 'Normal','beta' : 'Beta'},multiple=False),
-                    ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
-                    ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False),
+                    ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
                     ui.input_slider('std_diff',label="Cohen's d",min=0,max=2,value=0,step=0.1,ticks=False),
                     width = 2
@@ -66,6 +65,14 @@ def generate_data_server(input, output, session,mccv_obj):
     def dist_func():
         return getattr(rng,input.dist())
     
+    @output
+    @render.ui
+    def dist_params():
+        if input.dist()=='normal' or input.dist()=='beta':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
+                ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False)
+            )
     @reactive.Effect
     @reactive.event(input.dist)
     def _():
@@ -80,11 +87,23 @@ def generate_data_server(input, output, session,mccv_obj):
             ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
     
     @reactive.Calc
-    @reactive.event(input.param1,input.param2,input.n,input.prop_class1,input.std_diff)
+    @reactive.event(input.dist,input.param1,input.param2,input.n)
+    def dist_param_dict():
+        if input.dist()=='normal':
+            return {'loc' : input.param1(),
+                    'scale' : input.param2(),
+                    'size' : input.n()}
+        if input.dist()=='beta':
+            return {'a' : np.max([input.param1(),1]),
+                    'b' : np.max([input.param2(),1]),
+                    'size' : input.n()}
+        
+    @reactive.Calc
+    @reactive.event(input.dist,dist_param_dict,input.prop_class1,input.std_diff)
     def data_generator():
-        arr = dist_func()(input.param1(),
-                            input.param2(),
-                            size=input.n())
+        tmp = dist_param_dict().copy()
+        print(tmp)
+        arr = dist_func()(**tmp)
         array1, array0 = generate_arrays(input.prop_class1(),input.std_diff(), arr)
         return pd.DataFrame({'result' : np.concatenate([array1,array0]),
                              'class' : np.concatenate([np.ones(len(array1)),np.zeros(len(array0))])})
