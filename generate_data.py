@@ -7,6 +7,8 @@ from plotnine import *
 
 def generate_arrays(class1_size, effect_size, input_array):
     '''
+    chatgpt:
+    
     We calculate the lengths of the two classes based on the class1_size input, ensuring that their sum equals the length of the input_array.
     We calculate the mean difference between the two output arrays by multiplying the effect_size input with the standard deviation of the input_array.
     We create the class1_array by taking the first class1_length elements of the input_array and adding the mean difference.
@@ -24,6 +26,9 @@ def generate_arrays(class1_size, effect_size, input_array):
     return class1_array, class0_array
 
 def calculate_bin_width(data_array):
+    #https://plotnine.readthedocs.io/en/stable/generated/plotnine.geoms.geom_density.html#plotnine.geoms.geom_density
+    #and chatgpt
+    
     # Sort the data in ascending order
     sorted_data = np.sort(data_array)
     
