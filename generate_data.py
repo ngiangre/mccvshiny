@@ -31,7 +31,7 @@ def generate_data_ui(label: str = "simulate"):
                                     min=50,max=500,step=50,value=100,
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
-                                    choices = {'normal' : 'Normal','beta' : 'Beta'},multiple=False),
+                                    choices = {'normal' : 'Normal','beta' : 'Beta','standard_t' : "Student's T"},multiple=False),
                     ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Proportion of Class 1',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
                     ui.input_slider('std_diff',label="Cohen's d",min=0,max=2,value=0,step=0.1,ticks=False),
@@ -73,25 +73,31 @@ def generate_data_server(input, output, session,mccv_obj):
                 ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
                 ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False)
             )
+        if input.dist()=='standard_t':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=1,max=5,step=1,value=1,ticks=False)
+            )
     @reactive.Effect
-    @reactive.event(input.dist)
+    @reactive.event(input.dist,input.n)
     def _():
         if input.dist()=='normal':
             ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
             ui.update_slider('param2',label='sigma',min=1,max=5,value=1,step=1)
-        if input.dist()=='t':
-            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
-            ui.update_slider('param2',label='df',min=1,max=5,value=1,step=1)
+        if input.dist()=='standard_t':
+            ui.update_slider('param1',label='df',min=1,max=input.n()-1,value=1,step=1)
         if input.dist()=='beta':
             ui.update_slider('param1',label='a',min=1,max=5,value=1,step=1)
             ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
     
     @reactive.Calc
-    @reactive.event(input.dist,input.param1,input.param2,input.n)
+    @reactive.event(input.dist,input.param1 or input.param2,input.n)
     def dist_param_dict():
         if input.dist()=='normal':
             return {'loc' : input.param1(),
                     'scale' : input.param2(),
+                    'size' : input.n()}
+        if input.dist()=='standard_t':
+            return {'df' : np.max([input.param1(),1]),
                     'size' : input.n()}
         if input.dist()=='beta':
             return {'a' : np.max([input.param1(),1]),
@@ -102,7 +108,6 @@ def generate_data_server(input, output, session,mccv_obj):
     @reactive.event(input.dist,dist_param_dict,input.prop_class1,input.std_diff)
     def data_generator():
         tmp = dist_param_dict().copy()
-        print(tmp)
         arr = dist_func()(**tmp)
         array1, array0 = generate_arrays(input.prop_class1(),input.std_diff(), arr)
         return pd.DataFrame({'result' : np.concatenate([array1,array0]),
@@ -128,6 +133,8 @@ def generate_data_server(input, output, session,mccv_obj):
             binwidth_ = 0.5
         if input.dist() == 'beta':
             binwidth_ = 0.1
+        if input.dist() == 'standard_t':
+            binwidth_ = 5
         return (ggplot(tmp,aes(x='result',fill='class'))
                 + geom_histogram(binwidth=binwidth_,position='identity',alpha=0.5,color='black')
                 + labs(x='Result',y='Number in Class')
