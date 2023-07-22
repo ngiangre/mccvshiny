@@ -13,7 +13,7 @@ app_ui = ui.page_fluid(
                 '''
                 Evidentiary and interpretable prediction. Learn more at [mccv.nickg.bio](mccv.nickg.bio).
                 
-                Use this app to simulate data, classify data into two groups, run MCCV, and inspect prediction results.
+                Use this app to simulate data, parameterize learning with MCCV (limited to LR currently), run MCCV, and observe prediction results. Gray region in MCCV result plots indicate permutation distribution for comparison.
                 '''),
             generate_data_ui('simulate'),
             mccv_results_ui('mccv_results')
