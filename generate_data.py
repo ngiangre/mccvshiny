@@ -54,8 +54,11 @@ def generate_data_ui(label: str = "simulate"):
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
                                     choices = {
-                                        'normal' : 'Normal','poisson' : 'Poisson',
-                                        'beta' : 'Beta','standard_t' : "Student's T",
+                                        'normal' : 'Normal',
+                                        'lognormal' : 'Log Normal',
+                                        'poisson' : 'Poisson',
+                                        'beta' : 'Beta',
+                                        'standard_t' : "Student's T",
                                         'negative_binomial' : 'Negative Binomial',
                                         'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
@@ -100,6 +103,11 @@ def generate_data_server(input, output, session,mccv_obj):
                 ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
                 ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False)
             )
+        if input.dist()=='lognormal':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=0,max=100,step=1,value=0,ticks=False),
+                ui.input_slider('param2','Parameter 2',min=1,max=10,step=1,value=1,ticks=False)
+            )
         if input.dist()=='negative_binomial':
             return ui.TagList(
                 ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=1,ticks=False),
@@ -121,8 +129,11 @@ def generate_data_server(input, output, session,mccv_obj):
     @reactive.event(input.dist,input.n)
     def _():
         if input.dist()=='normal':
-            ui.update_slider('param1',label='mu',min=-5,max=5,value=0,step=1)
-            ui.update_slider('param2',label='sigma',min=1,max=5,value=1,step=1)
+            ui.update_slider('param1',label='loc',min=-5,max=5,value=0,step=1)
+            ui.update_slider('param2',label='scale',min=1,max=5,value=1,step=1)
+        if input.dist()=='lognormal':
+            ui.update_slider('param1',label='mean',min=0,max=100,value=0,step=1)
+            ui.update_slider('param2',label='sigma',min=1,max=10,value=1,step=1)
         if input.dist()=='negative_binomial':
             ui.update_slider('param1',label='n',min=1,max=input.n()-1,value=1,step=1)
             ui.update_slider('param2',label='p',min=0.1,max=0.7,value=0.5,step=0.1)
@@ -142,6 +153,10 @@ def generate_data_server(input, output, session,mccv_obj):
         if input.dist()=='normal':
             return {'loc' : input.param1(),
                     'scale' : input.param2(),
+                    'size' : input.n()}
+        if input.dist()=='lognormal':
+            return {'mean' : input.param1(),
+                    'sigma' : input.param2(),
                     'size' : input.n()}
         if input.dist()=='negative_binomial':
             return {'n' : np.max([input.param1(),1]),
