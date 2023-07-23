@@ -5,24 +5,32 @@ import numpy as np
 import pandas as pd
 from plotnine import *
 
+import numpy as np
+
 def generate_arrays(class1_size, effect_size, input_array):
-    '''
-    chatgpt:
-    
-    We calculate the lengths of the two classes based on the class1_size input, ensuring that their sum equals the length of the input_array.
-    We calculate the mean difference between the two output arrays by multiplying the effect_size input with the standard deviation of the input_array.
-    We create the class1_array by taking the first class1_length elements of the input_array and adding the mean difference.
-    We create the class0_array by taking the remaining elements of the input_array and subtracting the mean difference.
-    Finally, we return the two output arrays: class1_array and class0_array.
-    '''
+
+    # Calculate the sizes of the two output arrays
     class1_length = int(class1_size * len(input_array))
     class0_length = len(input_array) - class1_length
-    
+
+    # Calculate the difference in means required to achieve the desired effect size
     mean_diff = effect_size * np.std(input_array)
-    
-    class1_array = input_array[:class1_length] + mean_diff
-    class0_array = input_array[class1_length:] - mean_diff
-    
+
+    # Randomly shuffle the input_array to avoid any bias
+    np.random.shuffle(input_array)
+
+    # Split the shuffled array into two arrays based on the class1_size
+    class1_array = input_array[:class1_length]
+    class0_array = input_array[class1_length:]
+
+    # Calculate the mean of the two arrays
+    mean_class1 = np.mean(class1_array)
+    mean_class0 = np.mean(class0_array)
+
+    # Shift the means to achieve the desired mean difference
+    class1_array += mean_diff / 2
+    class0_array -= mean_diff / 2
+
     return class1_array, class0_array
 
 def calculate_bin_width(data_array):
@@ -63,7 +71,7 @@ def generate_data_ui(label: str = "simulate"):
                                         'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Class 1 Proportion',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
-                    ui.input_slider('std_diff',label="Cohen's D",min=-2,max=2,value=0,step=0.1,ticks=False),
+                    ui.input_slider('std_diff',label="Average Class Difference",min=-2,max=2,value=0,step=0.1,ticks=False),
                     width = 2
                 ),
                 main = ui.navset_tab_card(
