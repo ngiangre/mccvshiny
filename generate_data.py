@@ -40,8 +40,8 @@ def calculate_bin_width(data_array):
     # Calculate the number of data points
     n = len(sorted_data)
     
-    # Calculate the bin width using the Freedman-Diaconis rule
-    bin_width = 2.0 * iqr * n**(-1/3)
+    # Calculate the bin width using the Freedman-Diaconis rule 
+    bin_width = (2.0 * iqr * n**(-1/3))
     
     return bin_width
 
@@ -50,7 +50,7 @@ def generate_data_ui(label: str = "simulate"):
     return  ui.layout_sidebar(
                 sidebar = ui.panel_sidebar(
                     ui.input_slider('n','N',
-                                    min=50,max=1000,step=50,value=500,
+                                    min=100,max=1000,step=50,value=500,
                                     ticks=False),
                     ui.input_selectize('dist','Distribution Type',
                                     choices = {
@@ -107,7 +107,7 @@ def generate_data_server(input, output, session,mccv_obj):
             )
         if input.dist()=='poisson':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=1,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=1,max=100,step=1,value=1,ticks=False)
             )
         if input.dist()=='pareto':
             return ui.TagList(
@@ -127,7 +127,7 @@ def generate_data_server(input, output, session,mccv_obj):
             ui.update_slider('param1',label='n',min=1,max=input.n()-1,value=1,step=1)
             ui.update_slider('param2',label='p',min=0.1,max=0.7,value=0.5,step=0.1)
         if input.dist()=='poisson':
-            ui.update_slider('param1',label='df',min=0,max=input.n()-1,value=1,step=1)
+            ui.update_slider('param1',label='lambda',min=0,max=100,value=1,step=1)
         if input.dist()=='pareto':
             ui.update_slider('param1',label='a',min=1,max=10,value=2,step=1)
         if input.dist()=='standard_t':
@@ -187,9 +187,9 @@ def generate_data_server(input, output, session,mccv_obj):
     def dist_histplot():
         tmp = data_generator().copy()
         tmp['class'] = tmp['class'].astype('int64').astype('object')
-        binwidth_ = np.max([1,
-                            calculate_bin_width(tmp.result.values)
-                            ])
+        binwidth_ = calculate_bin_width(tmp.result.values)
+        if binwidth_<=0:
+            binwidth_ = 0.5
         return (ggplot(tmp,aes(x='result',fill='class'))
                 + geom_density(data=tmp,
                                mapping=aes(x='result',
@@ -199,7 +199,7 @@ def generate_data_server(input, output, session,mccv_obj):
                                  color='darkgray',fill='darkgray')
                 + geom_histogram(mapping=aes(y=after_stat('count')),
                                  binwidth=binwidth_,position='identity',alpha=0.5,color='black')
-                + labs(x='Result',y='Number in Class',caption='Entire distribution in gray')
+                + labs(x='Result',y='Number in Class',caption='Result distribution shape in gray')
                 + scale_fill_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
                 + theme(text=element_text(family='Times',size=16)))
