@@ -10,7 +10,7 @@ def mccv_parameters_ui(label: str = 'mccv_parameters'):
                 ui.input_slider("n", "Number of Bootstraps", 0, 200, 200,step = 10,ticks=False),
                 ui.input_slider("n_jobs", "Number of Jobs", 
                                 min=1, 
-                                max=os.cpu_count(),
+                                max=4,
                                 value=1,
                                 step = 1,
                                 ticks=False),
