@@ -8,7 +8,7 @@ from plotnine import *
 import numpy as np
 
 def generate_arrays(class1_size, effect_size, input_array):
-
+    
     # Calculate the sizes of the two output arrays
     class1_length = int(class1_size * len(input_array))
     class0_length = len(input_array) - class1_length
@@ -28,6 +28,7 @@ def generate_arrays(class1_size, effect_size, input_array):
     mean_class0 = np.mean(class0_array)
 
     # Shift the means to achieve the desired mean difference
+
     class1_array += mean_diff / 2
     class0_array -= mean_diff / 2
 
@@ -64,10 +65,9 @@ def generate_data_ui(label: str = "simulate"):
                                     choices = {
                                         'normal' : 'Normal',
                                         'lognormal' : 'Log Normal',
-                                        'poisson' : 'Poisson',
+                                        'chisquare' : 'Chi Square',
                                         'beta' : 'Beta',
                                         'standard_t' : "Student's T",
-                                        'negative_binomial' : 'Negative Binomial',
                                         'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Class 1 Proportion',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
@@ -106,24 +106,24 @@ def generate_data_server(input, output, session,mccv_obj):
     @render.ui
     @reactive.event(input.dist,input.n)
     def dist_params():
-        if input.dist()=='normal' or input.dist()=='beta':
+        if input.dist()=='normal':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=0,max=1,step=0.1,value=0,ticks=False),
-                ui.input_slider('param2','Parameter 2',min=0,max=1,step=0.1,value=0,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=-5,max=5,step=0,value=1,ticks=False),
+                ui.input_slider('param2','Parameter 2',min=1,max=5,step=1,value=1,ticks=False)
+            )
+        if input.dist()=='beta':
+            return ui.TagList(
+                ui.input_slider('param1','Parameter 1',min=1,max=5,value=1,step=1,ticks=False),
+                ui.input_slider('param2','Parameter 2',min=1,max=5,value=1,step=1,ticks=False)
             )
         if input.dist()=='lognormal':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=0,max=100,step=1,value=0,ticks=False),
+                ui.input_slider('param1','Parameter 1',min=0,max=10,step=1,value=0,ticks=False),
                 ui.input_slider('param2','Parameter 2',min=1,max=10,step=1,value=1,ticks=False)
             )
-        if input.dist()=='negative_binomial':
+        if input.dist()=='chisquare':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=1,ticks=False),
-                ui.input_slider('param2','Parameter 2',min=0.1,max=0.7,step=0.1,value=0.5,ticks=False)
-            )
-        if input.dist()=='poisson':
-            return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=100,step=1,value=1,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=1,max=10,step=1,value=1,ticks=False)
             )
         if input.dist()=='pareto':
             return ui.TagList(
@@ -131,7 +131,7 @@ def generate_data_server(input, output, session,mccv_obj):
             )
         if input.dist()=='standard_t':
             return ui.TagList(
-                ui.input_slider('param1','Parameter 1',min=1,max=input.n()-1,step=1,value=input.n()-1,ticks=False)
+                ui.input_slider('param1','Parameter 1',min=2,max=10,step=1,value=10,ticks=False)
             )
     @reactive.Effect
     @reactive.event(input.dist,input.n)
@@ -140,17 +140,14 @@ def generate_data_server(input, output, session,mccv_obj):
             ui.update_slider('param1',label='loc',min=-5,max=5,value=0,step=1)
             ui.update_slider('param2',label='scale',min=1,max=5,value=1,step=1)
         if input.dist()=='lognormal':
-            ui.update_slider('param1',label='mean',min=0,max=100,value=0,step=1)
+            ui.update_slider('param1',label='mean',min=0,max=10,value=0,step=1)
             ui.update_slider('param2',label='sigma',min=1,max=10,value=1,step=1)
-        if input.dist()=='negative_binomial':
-            ui.update_slider('param1',label='n',min=1,max=input.n()-1,value=1,step=1)
-            ui.update_slider('param2',label='p',min=0.1,max=0.7,value=0.5,step=0.1)
-        if input.dist()=='poisson':
-            ui.update_slider('param1',label='lambda',min=0,max=100,value=1,step=1)
+        if input.dist()=='chisquare':
+            ui.update_slider('param1',label='df',min=1,max=10,value=1,step=1)
         if input.dist()=='pareto':
             ui.update_slider('param1',label='a',min=1,max=10,value=2,step=1)
         if input.dist()=='standard_t':
-            ui.update_slider('param1',label='df',min=1,max=input.n()-1,value=input.n()-1,step=1)
+            ui.update_slider('param1',label='df',min=2,max=10,value=10,step=1)
         if input.dist()=='beta':
             ui.update_slider('param1',label='a',min=1,max=5,value=1,step=1)
             ui.update_slider('param2',label='b',min=1,max=5,value=1,step=1)
@@ -167,17 +164,17 @@ def generate_data_server(input, output, session,mccv_obj):
                     'sigma' : input.param2(),
                     'size' : input.n()}
         if input.dist()=='negative_binomial':
-            return {'n' : np.max([input.param1(),1]),
+            return {'n' : np.max([input.param1(),2]),
                     'p' : input.param2(),
                     'size' : input.n()}
-        if input.dist()=='poisson':
-            return {'lam' : np.max([input.param1(),1]),
+        if input.dist()=='chisquare':
+            return {'df' : np.max([input.param1(),1]),
                     'size' : input.n()}
         if input.dist()=='pareto':
             return {'a' : np.max([input.param1(),1]),
                     'size' : input.n()}
         if input.dist()=='standard_t':
-            return {'df' : np.max([input.param1(),1]),
+            return {'df' : np.max([input.param1(),2]),
                     'size' : input.n()}
         if input.dist()=='beta':
             return {'a' : np.max([input.param1(),1]),
