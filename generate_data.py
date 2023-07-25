@@ -71,7 +71,7 @@ def generate_data_ui(label: str = "simulate"):
                                         'pareto' : 'Pareto'},multiple=False),
                     ui.output_ui('dist_params'),
                     ui.input_slider('prop_class1',label='Class 1 Proportion',min=0.2,max=0.8,value=0.5,step=0.1,ticks=False),
-                    ui.input_slider('std_diff',label="Average Class Difference",min=-2,max=2,value=0,step=0.1,ticks=False),
+                    ui.input_slider('std_diff',label="Average Class Offset",min=-2,max=2,value=0,step=0.1,ticks=False),
                     width = 2
                 ),
                 main = ui.navset_tab_card(
