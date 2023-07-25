@@ -8,7 +8,7 @@ Interactive App for exploring Monte Carlo Cross Validation predictions from the 
 
 2. Provide an online tool for 
 
-   A. Setting and generating univariate prior distributions based on t, beta, and normally distributed data.
+   A. Setting and generating univariate prior distributions based on randomly distributed data.
 
    B. Generating MCCV prediction results based on specified univariate data distributions.
 
@@ -20,58 +20,11 @@ Interactive App for exploring Monte Carlo Cross Validation predictions from the 
 
 1. Generate Data
 
-Input: N [0,1000] sample size parameter
-
-A. Normal data: mu [-5,5] and sigma [0,5] parameters
-
-B. Beta data: a [0,5] and b [0,5] parameters
-
-C. T data: mu [-5,5] and df [1,N-1] parameters
-
-Input: R range slider for target class 1 samples
-
-Input: P [0,1] proportion of class 1 samples in target distribution (remainder as class 0 samples)
-
-Output (return): Dataframe of status | result
-
-Output (side effect): Scatter boxplot of univariate distribution colored by class membership
-
 2. Parameterize MCCV Algorithm
-
-Input: Number of Bootstraps [1,200]
-
-Input: Models ['Logistic Regression', 'Random Forest', 'Support Vector Machines', 'Gradient Boosting Classifier']
-
-Output (return): Dictionary of mccv parameters
 
 3. Run MCCV Algorithm
 
-Create mccv and permuted_mccv objects given parameters and data
-
-Input: Dictionary of mccv parameters
-
-Input: Dataframe of status | result
-
-Output: Two mccv objects
-
-4. Display MCCV Result Tables
-
-Show the four tables as four tabs
-
-Input: Two mccv objects
-
-Output: Navset_bars of 4 tables for 1) real and 2) permuted mccv
-
-5. Display MCCV Result Plots
-
-Show 4 standard plots based on the 4 tables
-
-Input: Two mccv objects
-
-Output: Navset_bar of 4 plotsm
-
-## Design
-
+4. Display MCCV Results 
 
 ## Notes
 
