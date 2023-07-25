@@ -229,11 +229,13 @@ def generate_data_server(input, output, session,mccv_obj):
     def dist_boxplot():
         tmp = data_generator().copy()
         tmp['class'] = tmp['class'].astype('int64').astype('object')
-        return (ggplot(tmp,aes(x='class',y='result',color='class'))
-                + geom_violin(size=2)
-                + geom_boxplot(color='black',size=2)
-                + geom_jitter(size=3,width=0.2) 
+        return (ggplot(tmp,aes(x='class',y='result'))
+                + geom_violin(aes(color='class'),size=2)
+                + geom_boxplot(color='black',size=2,outlier_size=0,outlier_stroke=0)
+                + geom_jitter(aes(fill='class'),
+                              size=3,width=0.2,stroke=0.5) 
                 + labs(y='Result',x='Class')
+                + scale_fill_manual(values=['cornflowerblue','indianred'])
                 + scale_color_manual(values=['cornflowerblue','indianred'])
                 + theme_bw()
                 + theme(text=element_text(family='Times',size=16)))
